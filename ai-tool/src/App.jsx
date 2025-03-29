@@ -6,7 +6,8 @@ import Answer from './components/Answers';
 function App() {
   
   const [question,setQuestion]=useState('');
-  const [result,setResult]=useState([])
+  const [result,setResult]=useState([]);
+  const [recentHistory,setRecentHistory]=useState(JSON.parse(localStorage.getItem('history')))
 
 
  const payload={
@@ -16,6 +17,17 @@ function App() {
   }
 
   const askQuestio=async()=>{
+
+    if(localStorage.getItem('history')){
+      let history =JSON.parse(localStorage.getItem('history'))
+      history=[question,...history]
+      localStorage.setItem('history',JSON.stringify(history))
+      setRecentHistory(history)
+    }else{
+      localStorage.setItem('history',JSON.stringify[question])
+      setRecentHistory([question])
+    }
+
     let response =await fetch(URL,{
     method:"POST",
     body:JSON.stringify(payload)
@@ -29,10 +41,28 @@ function App() {
   // console.log(dataString);
   setResult([...result,{type:'q', text:question},{type:'a',text:dataString}]);
 }
-console.log(result);
+
+console.log(recentHistory);
+
+const clearHistory=()=>{
+  localStorage.clear();
+  setRecentHistory([])
+}
+
   return(
     <div className='grid grid-cols-5 h-screen text-centre'>
       <div className='col-span-1 bg-zinc-800'>
+        <h1 classname='text-xl text-white flex  text-center justify-center'>
+          <span>Recent Search</span>
+          <button onClick={clearHistory} className='cursor-pointer'><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
+        </h1>
+        <ul className='text-left overflow-auto mt-2'>
+          {
+            recentHistory && recentHistory.map((item)=>(
+              <li className='p-1 pl-5 truncate text-zinc-400 cursor-pointer hover:bg-zinc-700 hover:text-zinc-200'>{item}</li>
+            ))
+          }
+        </ul>
       </div>  
           <div className='col-span-4 p-10'>
             <div classNmae='container h-110 overflow-scroll'>
