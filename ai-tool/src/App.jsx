@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState,useEffect} from 'react';
 import './App.css'
 import { URL } from './constants';
 import Answer from './components/Answers';
@@ -7,31 +7,44 @@ function App() {
   
   const [question,setQuestion]=useState('');
   const [result,setResult]=useState([]);
-  const [recentHistory,setRecentHistory]=useState(JSON.parse(localStorage.getItem('history')))
+  const [recentHistory,setRecentHistory]=useState(JSON.parse(localStorage.getItem('history')));
+  const [selectedHistory,setSelectedHistory]=useState('');
+  // const [recentHistory, setRecentHistory] = useState(() => {
+  //   const storedHistory = localStorage.getItem('history');
+  //   return storedHistory ? JSON.parse(storedHistory) : [];
+  // });
+  
 
 
- const payload={
-    "contents": [{
-    "parts":[{"text":question}]
-    }]
-  }
 
-  const askQuestio=async()=>{
-
+  const askQuestion=async()=>{
+    
+    if(!question && !selectedHistory){
+      return false
+    }
+    if(question){
     if(localStorage.getItem('history')){
       let history =JSON.parse(localStorage.getItem('history'))
       history=[question,...history]
       localStorage.setItem('history',JSON.stringify(history))
       setRecentHistory(history)
     }else{
-      localStorage.setItem('history',JSON.stringify[question])
+      localStorage.setItem('history',JSON.stringify([question]))
       setRecentHistory([question])
     }
+  }
+
+const payloadDate=question ?question: selectedHistory
+  const payload={
+    "contents": [{
+    "parts":[{"text":payloadDate}]
+    }]
+  }
 
     let response =await fetch(URL,{
     method:"POST",
-    body:JSON.stringify(payload)
-  })
+    body: JSON.stringify(payload)
+  });
 
   response =await response.json();
   let dataString =response.candidates[0].content.parts[0].text;
@@ -39,15 +52,25 @@ function App() {
   dataString=dataString.map((item)=>item.trim())
 
   // console.log(dataString);
-  setResult([...result,{type:'q', text:question},{type:'a',text:dataString}]);
+  setResult([...result,{type:'q', text:question?question:selectedHistory},{type:'a',text: dataString}]);
 }
 
 console.log(recentHistory);
 
 const clearHistory=()=>{
   localStorage.clear();
-  setRecentHistory([])
+  setRecentHistory([]);
 }
+
+const isEnter=(event)=>{
+if(event.key=='Enter'){
+  askQuestion();
+}
+}
+
+useEffect(()=>{
+  askQuestion();
+},[selectedHistory])
 
   return(
     <div className='grid grid-cols-5 h-screen text-centre'>
@@ -59,18 +82,18 @@ const clearHistory=()=>{
         <ul className='text-left overflow-auto mt-2'>
           {
             recentHistory && recentHistory.map((item)=>(
-              <li className='p-1 pl-5 truncate text-zinc-400 cursor-pointer hover:bg-zinc-700 hover:text-zinc-200'>{item}</li>
+              <li onClick={()=>setSelectedHistory(item)} className='p-1 pl-5 truncate text-zinc-400 cursor-pointer hover:bg-zinc-700 hover:text-zinc-200'>{item}</li>
             ))
           }
         </ul>
       </div>  
           <div className='col-span-4 p-10'>
-            <div classNmae='container h-110 overflow-scroll'>
+            <div className='container h-110 overflow-scroll'>
               <div className='text-zinc-300'>
                 <ul>
               {
                 result.map((item,index)=>(
-                  <div key={index+Math.random()} key={index+Math.random()} class={item.type=='q'?'flex justify-end':''} >
+                  <div key={index+Math.random()}  className={item.type=='q'?'flex justify-end':''} >
                    {  
                     item.type=='q'?
                 <li key={index+Math.random()} 
@@ -87,8 +110,10 @@ const clearHistory=()=>{
               </div>
             </div>
             <div className='bg-zinc-800 w-1/2 p-1 pr-5 text-white m-auto rounded-2xl border-zinc-400 flex h-16'>
-              <input type="text" value={question} onChange={(event)=>setQuestion(event.target.value)}className='w-full h-full p-3 outline-none' placeholder="Ask me anything"></input>
-              <button onClick={askQuestio} >Ask</button>
+              <input type="text" value={question} 
+              onKeyDown={isEnter}
+              onChange={(event)=>setQuestion(event.target.value)}className='w-full h-full p-3 outline-none' placeholder="Ask me anything"></input>
+              <button onClick={askQuestion} >Ask</button>
             </div>
           </div>
     </div>
