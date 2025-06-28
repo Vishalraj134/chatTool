@@ -1,9 +1,8 @@
 export function checkHeading(str){
-    // to remove unnessecry star from answers
+    // removing un neccesry *
     return /^(\*)(\*)(.*)\*$/.test(str)
 }
 
-export function replaceHeadingStars(str){
-    // to remove unnessecry star from answers
+export function replaceHeadingStarts(str){
     return str.replace(/^(\*)(\*)|(\*)$/g,'')
 }
